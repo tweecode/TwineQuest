@@ -1,0 +1,29 @@
+::9991 Style GreenScreen About [Twine.private]
+LICENSE: Public Domain
+CONTRIBUTORS: Emmanuel King Turner (eturnerx / Et / @stormrose)
+VERSION: 20130317
+DESCRIPTION:
+A green version of an old console style greenscreen.
+Assumes the Jonah storyformat
+
+USAGE:
+Either (A is preferred)
+A) Include by listing the file in your StoryIncludes passage
+-or-
+B) Import the .twee file into your story.
+
+
+::9991 Style GreenScreen.twee [stylesheet]
+.passage .title { display:none; }
+body { background-color: #000; color: #6f3; font-family: monospace; }
+#content2, .passage, #passages, h1, h2, h3 { background-color: #030; color: #6f3; font-family: monospace; }
+#content2 { padding: 1em 2.5em; }
+#passages { padding-bottom: 5em; }
+.passage { font-size: 12px; line-height: 17px; }
+a.internalLink, a.externalLink, .disabled { color: #6f0; }
+.disabled { font-style: normal; }
+#footer { position: fixed; bottom: 1em; right: 1em; width: 15em;  background-color: #000; text-align: left; color: #060; }
+h1 { text-align: left; font-size: 28px; line-height: 34px; }
+h2 { text-align: left; font-size: 17px; line-height: 17px; font-style: normal; font-weight: bold; }
+h3 { text-align: left; font-size: 14px; line-height: 17px; font-weight: bold; margin: 0; padding: 0; }
+#storyTitle { display: block; text-align: center; font-size: 34px; line-height: 34px; }

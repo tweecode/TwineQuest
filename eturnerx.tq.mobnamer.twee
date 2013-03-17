@@ -1,0 +1,176 @@
+::eturnerx.tq.mobnamer.twee About [Twine.private]
+LICENSE: Public Domain
+
+PURPOSE: 
+This plugin extends TwineQuest.mob and adds the ability to automatically
+generate names for mobs
+
+The basic name segment generation is based on:
+http://forum.codecall.net/topic/49665-java-random-name-generator/#axzz2B24xMDe8
+
+
+USAGE: 
+Initialise a mob without a name assigned. 
+Specify an optional culture attribute in the mob to select different name generation cultures
+
+
+CONTRIBUTORS:
+(Add your name as you contribute)
+Emmanuel King Turner (eturnerx / @stormrose / Et) http://eturnerx.com
+
+
+
+::eturnerx.tq.mobnamer [tq.system.plugin]
+{
+    version: '0.1.0',
+    
+    tag: 'eturnerx.mobnamer.culture',
+    
+    priority: 2000,
+    
+    onInit: function() {
+        this._mobplugin = TwineQuest.findPluginById('TwineQuest.mob');
+        if(this._mobplugin) {
+            this._old_onInitMob = this._mobplugin.onInitMob;
+            this._mobplugin.onInitMob = this.onInitMob;
+            this._mobplugin['_eturnerx.tq.mobnamer'] = this;
+            this._cultures = {};
+        }
+    },
+    
+    onPassage: function(passage) {
+        if(passage && passage.title && passage.text) {
+            var culture = passage.title.substring(passage.title.lastIndexOf(' ') + 1);
+            this.addCulture(culture.toLowerCase(), passage.text);
+        }
+    },
+    
+    onStart: null,
+    
+    onEvent: null,
+    
+    onInitMob: function(tid, mob) {
+        if(mob.name == null) {
+            mob.name = this['_eturnerx.tq.mobnamer'].generateName(mob.culture ? mob.culture : 'Default');
+        }
+        return this['_eturnerx.tq.mobnamer']._old_onInitMob(tid, mob);
+    },
+    
+    addCulture: function(culture, text) {
+        this._cultures[culture] = { prefix:[], middle:[], suffix:[] };
+        var g = text.split(String.fromCharCode(10));
+        for(var gi = 0; gi < g.length; gi++) {
+            var l = g[gi].split(' ');
+            var entry = { syllable:null, nextConsonant:false, nextVowel:false, lastConsonant:false, lastVowel:false };
+            for(var li = 0; li < l.length; li++) {
+                var t = l[li];
+                if(entry['syllable'] == null) entry['syllable'] = t;
+                else if(t == '+c') entry['nextConsonant'] = true;
+                else if(t == '+v') entry['nextVowel'] = true;
+                else if(t == '-c') entry['lastConsonant'] = true;
+                else if(t == '-v') entry['lastVowel'] = true;
+            }
+            var c = '';
+            if(entry['syllable'][0] == '-') {
+                entry['syllable'] = entry['syllable'].substring(1);
+                c = entry['syllable'][0];
+                entry['startsWithVowel'] = (c=='a'||c=='e'||c=='i'||c=='o'||c=='u');
+                c = entry['syllable'][entry['syllable'].length-1];
+                entry['endsWithVowel'] = (c=='a'||c=='e'||c=='i'||c=='o'||c=='u');
+                this._cultures[culture].prefix.push(entry);
+            } else if(entry['syllable'][0] == '+') {
+                entry['syllable'] = entry['syllable'].substring(1);
+                c = entry['syllable'][0];
+                entry['startsWithVowel'] = (c=='a'||c=='e'||c=='i'||c=='o'||c=='u');
+                c = entry['syllable'][entry['syllable'].length-1];
+                entry['endsWithVowel'] = (c=='a'||c=='e'||c=='i'||c=='o'||c=='u');
+                this._cultures[culture].suffix.push(entry);
+            } else {
+                c = entry['syllable'][0];
+                entry['startsWithVowel'] = (c=='a'||c=='e'||c=='i'||c=='o'||c=='u');
+                c = entry['syllable'][entry['syllable'].length-1];
+                entry['endsWithVowel'] = (c=='a'||c=='e'||c=='i'||c=='o'||c=='u');
+                this._cultures[culture].middle.push(entry);
+            }
+        }
+    },
+    
+    generateName: function(culture) {
+        if(culture == null) {
+            culture = 'default';
+        }
+        var ns = this._cultures[culture.toLowerCase()];
+        if(ns == null) ns = this._cultures['default'];
+        var s1e, s2e, s3e, proceed, ok;
+        s1e = ns.prefix[Math.floor(Math.random() * ns.prefix.length)];
+        proceed = -1000;
+        while(proceed < 0) {
+            proceed++;
+            s2e = ns.middle[Math.floor(Math.random() * ns.middle.length)];
+            ok = true;
+            if(s1e.nextConsonant == true && s2e.startsWithVowel == true) ok = false;
+            if(s1e.nextVowel == true && s2e.startsWithVowel == false) ok = false;
+            if(s2e.lastConsonant == true && s1e.endsWithVowel == true) ok = false;
+            if(s2e.lastVowel == true && s1e.endsWithVowel == false) ok = false;
+            if(ok) proceed = 1;
+        }
+        if(proceed == 0) s2e = { syllable:'_' };
+        proceed = -1000;
+        while(proceed < 0) {
+            proceed++;
+            s3e = ns.suffix[Math.floor(Math.random() * ns.suffix.length)];
+            ok = true;
+            if(s2e.nextConsonant == true && s3e.startsWithVowel == true) ok = false;
+            if(s2e.nextVowel == true && s3e.startsWithVowel == false) ok = false;
+            if(s3e.lastConsonant == true && s2e.endsWithVowel == true) ok = false;
+            if(s3e.lastVowel == true && s2e.endsWithVowel == false) ok = false;
+            if(ok) proceed = 1;
+        }
+        if(proceed == 0) s3e = { syllable:'_' };
+        var segment = s1e.syllable + s2e.syllable + s3e.syllable;
+        segment = segment.substr(0,1).toUpperCase() + segment.substr(1);
+        return segment;
+    },
+    
+    _mobplugin: null,
+    _old_onInitMob: null,
+    _cultures: null,
+}
+
+
+::eturnerx.tq.mobnamer Default [tq.eturnerx.mobnamer.culture]
+-a
+-al
+-au +c
+-an
+-ba
+-be
+-bi
+-br +v
+-da
+-di
+-do
+-du
+-e
+-eu +c
+-fa
+bi
+be
+bo
+bu
+nul +v
+gu
+da
+au +c -c
+fri
+gus
++tus
++lus
++lius
++nus
++es
++ius -c
++cus
++tor
++cio
++tin

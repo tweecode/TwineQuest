@@ -1,0 +1,63 @@
+::9990 Display Console About [Twine.private]
+LICENSE: Public Domain
+VERSION: 20130317
+DESCRIPTION:
+This provides some hacks to the Jonah story format to support a continuous
+scrolling story - similar to the text terminal games of yore.
+
+Useful for many oldschool text game conversions.
+Works best when partnered with a friendly style-sheet
+e.g. 9991 Style GreenScreen.twee
+     9991 Style BlueScreen.twee
+
+TECHNICAL:
+Replaces the Passage.prototype.render
+- Always appends text. Adds a timestamp to the passage id
+- Suppresses the passage title and toolbar from Jonah
+Replaces the <<choice>> macro to deactivate all choices once one has
+been selected by the user.
+
+Probably not compatible with anything else that replaces/extends
+- Passage.prototype.render
+- <<choice>> macro
+
+CONTRIBUTORS:
+Emmanuel King Turner (Et / eturnerx / @stormrose)
+
+
+::9990 Display Console [script]
+// Needed to allow loops back through text while keeping output linear
+// Suppress title and toolbar while we're at it
+Passage.prototype.render = function() {
+    var passagediv = insertElement(null, 'div', 'passage' + this.title + 'j' + (new Date).getTime(), 'passage');
+    passagediv.style.visibility = 'hidden';
+    passagediv.setAttribute('data-tags', this.tags.join(' '));
+    var body = insertElement(passagediv, 'div', '', 'body');
+    new Wikifier(body, this.text);
+    // event handlers
+    passagediv.onmouseover = function() { passagediv.className += ' selected' };
+    passagediv.onmouseout = function() { passagediv.className = passagediv.className.replace(' selected', ''); };
+    return passagediv;
+};
+
+//And hack the choice macro - no going back!
+macros['choice'].activate = function (el, destination) {
+    var parentDiv = el.parentNode;
+    while (parentDiv.className.indexOf('body') == -1)
+        parentDiv = parentDiv.parentNode;
+    var title = parentDiv.parentNode.id.substr(7);
+    var links = parentDiv.getElementsByTagName('a');
+    var trashed = [];
+    for (var i = 0; i < links.length; i++)
+        if (links[i].className.indexOf('choice') != -1) {
+            var span = document.createElement('span');
+            span.innerHTML = links[i].innerHTML;
+            span.className = 'disabled';
+            links[i].parentNode.insertBefore(span, links[i].nextSibling);
+            trashed.push(links[i]);
+        };
+    tale.get(title).text = '<html>' + parentDiv.childNodes[0].innerHTML + '</html>';
+    state.display(destination, el);
+    for (var i = 0; i < trashed.length; i++)
+        trashed[i].parentNode.removeChild(trashed[i]);
+}

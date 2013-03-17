@@ -1,0 +1,102 @@
+::eturnerx.tq.mobnamer.elvish About [Twine.private]
+LICENSE: Public Domain
+
+Elvish culture name stems for automatic name generation provided by
+the eturnerx.tq.mobnamer.twee plugin.
+See: the About for eturnerx.tq.mobnamer.twee
+
+From the examples provided at:
+http://forum.codecall.net/topic/49665-java-random-name-generator/#axzz2B24xMDe8
+
+
+CONTRIBUTORS:
+(Add your name as you contribute)
+Emmanuel King Turner (eturnerx / @stormrose / Et) http://eturnerx.com
+
+
+
+::eturnerx.tq.mobnamer Elvish [tq.eturnerx.mobnamer.culture]
+-ael
+-aer
+-af
+-ah
+-am
+-ama
+-an
+-ang +v
+-ansr +v
+-cael
+-dae +c
+-dho
+-eir
+-fi
+-fir
+-la
+-seh
+-sel
+-ev
+-fis
+-hu
+-ha
+-gar
+-gil
+-ka
+-kan
+-ya
+-za
+-zy
+-mara
+-mai +c
+-lue +c
+-ny
+-she
+-sum
+-syl
+ae +c -c
+ael -c
+dar
+deth +v
+dre -v
+drim -v
+dul
+ean -c
+el
+emar
+hal
+iat -c
+mah
+ten
+que -v +c
+ria
+rail
+ther
+thus
+thi
+san
++ael -c
++dar
++deth
++dre
++drim
++dul
++ean -c
++el
++emar
++nes
++nin
++oth
++hal
++iat
++mah
++ten
++ther
++thus
++thi
++ran
++ath
++ess
++san
++yth
++las
++lian
++evar

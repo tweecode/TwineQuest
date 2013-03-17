@@ -1,0 +1,119 @@
+::TwineQuest_proposal.twee About [Twine.private]
+LICENSE: Public Domain
+
+PURPOSE: A running demo for the TwineQuest proposal by Stormrose
+
+USAGE:
+This file is used by TwineQuest_proposal.tws
+
+
+CONTRIBUTORS:
+(Add your name as you contribute)
+Emmanuel King Turner (eturnerx / stormrose / Et) http://eturnerx.com
+
+
+
+::RealStart
+Unrecognised label: Frelling syntax: {test} with following text.
+Label handled by a plugin: Can I say {hello} and {hello to you all} again?
+
+
+Testing the print macro shortcut
+Set then print a var $tpms = Car: <<set $tpms = "Car">>{tpms}
+
+
+Is the TwineQuest.AutoVars built-in plugin working?
+1: <<print $autovar1>>
+2: <<print $autovar2>>
+3: <<print $autovar3>>
+
+-and with alternative curly bracket syntax?
+4: {$autovar4}
+5: {autovar5}
+
+
+Does the TwineQuest.AutoObjects built-in plugin work?
+Object One: <<print $potatoman.name>>
+<<print $potatoman.description>>
+
+-and with alternative curly bracket syntax?
+Object Two: {$bananaman.name}
+{bananaman description}
+
+
+What about mobs (monster objects)?
+As you enter you see {mob1 describe}. His name is {mob1} and he is <<print $mob1.age>> (yes, {mob1.age}) years old.
+{mob2}: {mob2 describe}  -- (use the tq.mob plugin) 
+{$mob3.name}: {$mob3 description} -- (autogen use print macro shortcut by prefixing a $)
+{mob4} is a {mob4 culture}. - autogen with culture name
+
+[[Link 1]] (will set the $test var after the jump)
+
+
+
+::Link 1
+<<set $test = "(The test variable is set using Twine's set macro)">>
+More frelling syntax: {test will still fail}, but try going back again.
+
+[[Start again|RealStart]]
+
+
+
+::Autoset some variables [tq.vars]
+autovar1: harro
+autovar2:
+This is a big longer and includes much more stuff that goes over several
+lines like this. We'd use this for things that are more descriptive.
+
+autovar3:
+Since acn (attribute colon newline) format terminates on a blank line
+then how does one handle this problem?
+
+Where a var needs to include it's own newlines.
+
+Before we can start another variable.
+
+autovar4: Just detect colon with no preceding spaces
+
+
+::Autoset some more variables [tq.vars]
+autovar5: whee!
+
+
+::potatoman [tq.object]
+name: Mr. PotatoMan
+description:
+Brown skinned and irregularly shaped. At home in the dirt.
+
+
+::another auto raw object [tq.object]
+id: bananaman
+name: Mr. BananaMan
+description: Yellow, long and hangs in trees.
+
+
+
+::mob1 [tq.mob]
+name: Tom
+description: a small, confused boy
+age: 7
+
+::Another mob monster object [tq.mob]
+id: mob2
+name: Richard
+description: 
+A small boy about eight years old. Afraid but putting on a brave face.
+
+::Empty Mob [tq.mob]
+id: mob3
+
+::Generated Mob [tq.mob]
+id: mob4
+culture: Goblin
+
+
+::Some Stylesheet [stylesheet]
+.TwineQuest, .tq_mob { 
+    color: #000;
+    background-color: #ff9;
+}

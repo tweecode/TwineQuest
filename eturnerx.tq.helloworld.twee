@@ -1,0 +1,43 @@
+::eturnerx.tq.helloworld.twee About [Twine.private]
+LICENSE: Public Domain
+
+PURPOSE: 
+A simple plugin demonstration.
+
+This is called TwineQuest.eturnerx.X.twee because it is not "official"
+TwineQuest core plugin or to denote a set of plugins that play nice
+together/by the same authors.
+
+USAGE: {hello} / {hello and some text}
+
+CONTRIBUTORS:
+(Add your name as you contribute)
+Emmanuel King Turner (eturnerx / @stormrose / Et) http://eturnerx.com
+
+
+::eturnerx.tq.helloworld [tq.system.plugin]
+{
+    version: '0.1.1',
+    
+    tag: null,
+    
+    onInit: function() {
+        // Nothing to do on init
+    },
+
+    onPassage: function(passage) {
+        // Nothing to do when TQ has a passage that matches 'tag'
+    },
+    
+    onStart: function() {
+        // Register our label and it's handler. It doesn't have any associated data
+        TwineQuest.registerLabel('hello', this.handleLabel, null, this);
+    },
+    
+    onEvent: function(evt, params) {
+    },
+        
+    handleLabel: function(place, label, params, parser, data, plugin) {
+        insertElement(place, 'span', null, 'TwineQuest HelloWorld', label + (params.length > 0 ? ' ' : '') + params.join(' '));
+    },
+}

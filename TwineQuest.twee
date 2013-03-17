@@ -1,0 +1,313 @@
+::TwineQuest.twee About [Twine.private]
+LICENSE: Public Domain
+PURPOSE:
+This is the core TwineQuest file. It contains things that are common to 
+all TwineQuest plugins. The purpose is to:
+
+1) Bootstrap the TwineQuest system
+2) Add TwineQuest support to the wikifier
+3) Provide utility functions useful to TwineQuest plugins
+3) Register TwineQuest plugins from the PassageStore
+4) Send events to TwineQuest plugins: init, start
+5) Built in plugins with near universal appeal tq.vars, tq.object
+
+
+TwineQuest plugins are optional. They should be as optional and rely on
+each other as little as practicable.
+
+
+USAGE:
+You will need a recent alpha version of v1.3.5 or v1.3.6 of Twine or
+later.
+Create a passage with the title "StoryIncludes"
+List this file (with relative path) on it's own line inside this passage
+(You may list file with an http url too)
+List the filenames of any TwineQuest plugins that you wish to use inside
+the StoryIncludes passage. One per line.
+
+
+CONTRIBUTORS:
+(Add your name as you contribute)
+Henry Soule 
+Emmanuel King Turner (eturnerx / stormrose / Et) http://eturnerx.com
+
+
+
+
+
+::TwineQuest Core Macro [script tq.core]
+try {
+
+// Bootstrap the TwineQuest System
+version.extensions['TwineQuestSystem'] = { major:0, minor:1, revision:0 };
+var TwineQuest = {
+    plugins: [],     // TwineQuest plugins
+    tags: {},       // The passage tags that TwineQuest plugins handle
+    labels: {},     // The {passagetext} that TwineQuest responds to
+};
+
+// Add TwineQuest support to the wikifier
+Wikifier.formatters.push({
+    name: 'TwineQuest',
+    match: '{',
+    handler: function(w) {
+        var s = w.source.substr(w.matchStart);
+        if(s.length > 2 && s.indexOf('}') > 0) {
+            s = s.substr(1,s.indexOf('}')-1);
+            w.nextMatch = w.matchStart + s.length + 2;
+            if(s.length == 0) {
+                s = ['_'];
+            } else {
+                s = s.split(' ');
+            }
+            var label = s.shift();
+            if(TwineQuest.labels[label] && typeof TwineQuest.labels[label].handler == 'function') {
+                TwineQuest.labels[label].handler(
+                    w.output, label, s, w, 
+                    (TwineQuest.labels[label].data ? TwineQuest.labels[label].data : null),
+                    (TwineQuest.labels[label].plugin ? TwineQuest.labels[label].plugin : null)                    
+                );
+            } else {
+                var label1 = (label.indexOf('$') == 0 ? label.substr(1) : label);
+                var branches = label1.split('.');
+                branches = branches.concat(s);
+                var node = state.history[0].variables;
+                var traverse = true;
+                var newnode;
+                var i = branches.length;
+                while(traverse == true && i--) {
+                    newnode = branches.shift();
+                    if(node[newnode] != null) {
+                        node = node[newnode];
+                    } else {
+                        traverse = false;
+                    }
+                }
+                if(traverse) {
+                    insertElement(w.output,'span',null,'tq_print_var',node);
+                } else {
+                    insertElement(w.output,'span',null,'marked',label + (s.length > 0 ? ' ' : '') + s.join(' '));
+                }
+            }
+        } else {
+            insertElement(w.output,'span',null,'marked','TwineQuest:Opening Curly Brace with no match closing curly brace:');
+        }
+    }
+});
+
+
+// Provide utility functions useful to TwineQuest plugins
+TwineQuest.registerPlugin = function(a) {
+    if(a != null) {
+        if(a.priority == null) {
+            a.priority = 1000;
+        }
+        this.plugins.push(a);
+        this.plugins.sort(function(a,b){
+            return a.priority - b.priority;
+        });
+    }
+}
+TwineQuest.initPlugins = function() {
+    for(var ip = 0; ip < this.plugins.length; ip++) {
+        var a = this.plugins[ip];
+        if(a != null) {
+            if(typeof a.onInit == 'function') {
+                a.onInit();
+            }
+            if(typeof a.onEvent == 'function') {
+                a.onEvent('init',null);
+            }
+        }
+    }
+}
+TwineQuest.findPluginById = function(id) {
+    var r = null;
+    var i = this.plugins.length - 1;
+    do {
+        if(this.plugins[i].id == id) {
+            r = this.plugins[i];
+            break;
+        }
+    } while(i--);
+    return r;
+};
+TwineQuest.tagFindPlugins = function() {
+    var ip = this.plugins.length - 1;
+    do {
+        var a = this.plugins[ip];
+        if(a && a.tag && (typeof a.onPassage == 'function' || typeof a.onEvent == 'function')) {
+            var p = tale.lookup('tags', 'tq.' + a.tag);
+            for(var i = 0; i < p.length; i++) {
+                if(typeof a.onPassage == 'function') {
+                    a.onPassage(p[i]);
+                }
+                if(typeof a.onEvent == 'function') {
+                    a.onEvent('passage', p[i]);
+                }
+            }
+        }
+    } while(ip--);
+}
+TwineQuest.registerLabel = function(label, xhandler, xdata, xplugin) {
+    this.labels[label] = { handler: xhandler, data: xdata, plugin: xplugin };
+};
+TwineQuest.acnToObject = function(text) {
+    //TODO: Takes the attribute:newline format and converts to JS obj
+    var r = {}; 
+    var kv = [];
+    var state = 0;   //0 looking for var, 1 adding to value, 2 lastlineblank
+    var lines = text.split(String.fromCharCode(10));
+    for(var i in lines) {
+        var line = lines[i];
+        switch(state) {
+            case 0:
+                if(line.indexOf(':')>-1) {
+                    kv = line.split(':');
+                    kv[0] = kv[0].trim();
+                    kv[1] = kv[1].trim();
+                    if(kv[1].length > 0) {
+                        r[kv[0]] = kv[1];
+                    } else {
+                        state = 1;
+                    }
+                }
+                break;
+                
+            case 1:
+                line = line.trim();
+                if(line.length == 0) {
+                    state = 2;
+                    kv[1] = kv[1] + String.fromCharCode(10); 
+                } else {
+                    kv[1] = kv[1] + line + String.fromCharCode(10);
+                }
+                break;
+
+            case 2:
+                line = line.trim();
+                var icolon = line.indexOf(':');
+                var ispace = line.indexOf(' ');
+                if(icolon > 0 && (ispace < 0 || ispace >= icolon - 1)) {
+                    r[kv[0]] = kv[1].trim();
+                    kv = line.split(':');
+                    kv[0] = kv[0].trim();
+                    kv[1] = kv[1].trim();
+                    if(kv[1].length > 0) {
+                        r[kv[0]] = kv[1];
+                        state = 0;
+                    } else {
+                        state = 1;
+                    }
+                } else {
+                    kv[1] = kv[1] + line + String.fromCharCode(10);
+                    if(line.length > 0) {
+                        state = 1;
+                    }
+                }
+                break;
+        }
+    }
+    if(state != 0) r[kv[0]] = kv[1].trim();
+    return r;
+}
+
+
+
+// Built in plugins with near universal appeal
+//  Automatically set twine variables from tagged passages at story start
+TwineQuest.registerPlugin({
+    id: 'TwineQuest.AutoVars',
+    version: '0.1.0',
+    tag: 'vars',
+    onPassage: function(passage) {
+        if(passage && passage.text) {
+            var t = TwineQuest.acnToObject(passage.text);
+            for(var i in t) {
+                this._internalstore[i] = t[i];
+            }
+        }
+    },
+    onStart: function() {
+        for(var i in this._internalstore) {
+            state.history[0].variables[i] = this._internalstore[i];
+        }
+    },
+    _internalstore: {},
+});
+
+//  Automatically set twine objects from tagged passages at story start
+TwineQuest.registerPlugin({
+    id: 'TwineQuest.AutoObject',
+    version: '0.1.0',
+    tag: 'object',
+    onPassage: function(passage) {
+        var tid;
+        if(passage && passage.text) {
+            var t = TwineQuest.acnToObject(passage.text);
+            tid = (t.id == null ? passage.title : t.id);
+            if(t.type == null) {
+                t.type = 'tq.object';
+            }
+            this._internalstore[tid] = t;
+        }
+    },
+    onStart: function() {
+        for(var i in this._internalstore) {
+            state.history[0].variables[i] = Object.create(this._internalstore[i]);
+        }
+    },
+    _internalstore: {},
+});
+
+
+
+// Register TwineQuest plugins from the PassageStore
+var p = tale.lookup('tags','tq.system.plugin');
+for(var i=0;i<p.length;i++) {
+    try {
+        var TwineQuestPlugin;
+        eval('TwineQuestPlugin = ' + p[i].text);
+        if(TwineQuestPlugin && TwineQuestPlugin.id == null) {
+            TwineQuestPlugin.id = p[i].title;
+        }
+        TwineQuest.registerPlugin(TwineQuestPlugin);
+    } catch(e) {
+        throwError(place, 'Error registering TwineQuest plugin ' + p[i].title + ': ' + e.toString());
+    }
+}
+try {
+    TwineQuest.initPlugins();
+} catch(e) {
+    throwError(place, 'Error initialising TwineQuest plugins: ' + e.toString());
+}
+try {
+    TwineQuest.tagFindPlugins();
+} catch(e) {
+    throwError(place, 'Error creating data from passages for TwineQuest plugins: ' + e.toString());
+}
+
+
+// Start the TwineQuest system
+//  Send start events to TwineQuest plugins
+//  Uses a macro so that start events are resent if the story restarts
+macros['__TwineQuest_core'] = {
+    handler: function(place, macroName, params, parser) { 
+      // Do nothing - we can't be called
+    },
+    init: function() {
+        //Send "start" event to TwineQuest plugins
+        for(var i = 0; i < TwineQuest.plugins.length; i++) {
+            if(typeof TwineQuest.plugins[i].onStart == 'function') {
+                TwineQuest.plugins[i].onStart();
+            }
+            if(typeof TwineQuest.plugins[i].onEvent == 'function') {
+                TwineQuest.plugins[i].onEvent('start',null);
+            }
+        }
+    },
+};
+
+} catch(e) {
+  throwError(place,"TwineQuest Setup Error: "+e.message); 
+}

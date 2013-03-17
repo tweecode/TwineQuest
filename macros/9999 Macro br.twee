@@ -1,0 +1,36 @@
+::9999 Macro br.twee About [Twine.private]
+
+VERSION: 20130317
+
+LICENSE: Public Domain
+
+USAGE:
+<<br>>
+
+(No parameters)
+
+
+PURPOSE:
+Gives author control that deals with Twine's "trim whitespace" around
+fragments behaviour. 
+Useful at the start or end of passages.
+Useful at the start or end within <<if>><<else>><<endif>> blocks
+This macro <<br>> is a shortcut for <html><br></html>
+
+CONTRIBUTORS:
+Emmanuel King Turner (eturnerx / Et / @stormrose)
+
+ACKNOWLEDGEMENT:
+Idea can from user frustration expressed here:
+https://groups.google.com/d/topic/tweecode/FBgGTBrH8aM/discussion
+
+
+::9999 Macro br.twee [script]
+try { macros['br'] = { 
+  handler: function(place,macroName,params,parser) {
+    new Wikifier(place, '<html><br></html>');
+  },
+  init: function() { }
+};} catch(e) { 
+  throwError(place,"Macro br Error: "+e.message); 
+}

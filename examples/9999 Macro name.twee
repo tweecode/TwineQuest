@@ -1,0 +1,8 @@
+::9999 Macro name.twee [Twine.private]
+This passage is used to document the macro, acknowledgements etc.
+It does not end up in generated html files due to the tag
+
+credit Stormrose
+
+::9999 Macro name [script]
+The actual code for the macro/s

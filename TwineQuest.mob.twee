@@ -1,0 +1,82 @@
+::TwineQuest.mob.twee About [Twine.private]
+LICENSE: Public Domain
+
+PURPOSE: 
+TwineQuest plugin for mobs (monster objects)
+
+This plugin implements basic functionality and can be extended by other
+TwineQuest plugins to add custom attributes and functionality to the
+mobs.
+
+USAGE: {mob}
+
+CONTRIBUTORS:
+(Add your name as you contribute)
+Emmanuel King Turner (eturnerx / @stormrose / Et) http://eturnerx.com
+
+
+//TODO: state.history[0].variables[i] = this._internalstore[i]; should copy not reference the data
+
+::TwineQuest.mob [tq.system.plugin]
+{
+    version: '0.1.0',
+    
+    tag: 'mob',
+    
+    onInit: null,
+
+    onPassage: function(passage) {
+        if(passage && passage.text) {
+            var t = TwineQuest.acnToObject(passage.text);
+            if(t.id == null) {
+                t.id = passage.title;
+            }
+            this.onInitMob(t.id, t);
+        }
+    },
+
+    onStart: function() {
+        for(var i in this._internalstore) {
+            state.history[0].variables[i] = this._internalstore[i];
+            TwineQuest.registerLabel(i, this.handleLabel, state.history[0].variables[i], this);
+        }
+    },
+
+    onEvent: null,
+        
+    handleLabel: function(place, label, params, parser, data, plugin) {
+        if(plugin.onLabel(place, label, params, parser, data, plugin)) {
+            if(params.length == 0) {
+                insertElement(place, 'span', null, 'tq_mob ' + data.name, data.name);
+            } else if(params.length == 1 && params[0] == 'describe') {
+                insertElement(place, 'span', null, 'tq_mob describe ' + data.name, plugin.onDescribe(place, label, params, parser, data, plugin));
+            } else if(params.length == 1 && data[params[0]] != null) {
+                insertElement(place, 'span', null, 'tq_mob ' + data.name, data[params[0]]);
+            } else {
+                insertElement(place, 'span', null, 'tq_mob ' + data.name, data.name + (params.length > 0 ? ' ' : '') + params.join(' '));
+            }
+        }
+    },
+
+    //The onInitMob member is for hooking by extensions when a mob's data structure is created
+    onInitMob: function(tid, mob) {
+        if(mob.name == null && mob.id) {
+            mob.name = mob.id;
+        }
+        if(mob.type == null) {
+            mob.type = 'tq.mob';
+        }
+        if(mob.description == null) {
+            mob.description = mob.name + ' is indescribable.';
+        }
+        TwineQuest.findPluginById('TwineQuest.mob')._internalstore[tid] = mob;
+    },
+
+    //The onLabel member is for hooking by extensions to the mob. Return false to cancel default handling
+    onLabel: function(place, label, params, parser, data, plugin){ return true; },
+
+    //The onDescribe member is for hooking by extensions to the mob. Returns a string description
+    onDescribe: function(place, label, params, parser, data, plugin){ return data.description; },
+
+    _internalstore: {},
+}

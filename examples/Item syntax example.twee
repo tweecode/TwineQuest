@@ -1,0 +1,13 @@
+::The Golden Axe [TwineQuest.Item]
+LABEL: Golden Axe
+DESCRIPTION
+The Golden Axe of Sega, sort after by Amazons, Dwarves and Warriors. Forged of purist pixels and engraved into the memories of many.
+
+WEIGHT:5kg
+MATERIAL:
+Gold Alloy
+Leather
+
+LENGTH:1.5m
+SLOT: 2-handed-weapon
+ATTACK MODIFIER: +5

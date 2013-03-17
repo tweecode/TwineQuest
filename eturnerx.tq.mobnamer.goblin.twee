@@ -1,0 +1,66 @@
+::eturnerx.tq.mobnamer.goblin About [Twine.private]
+LICENSE: Public Domain
+
+Goblin culture name stems for automatic name generation provided by
+the eturnerx.tq.mobnamer.twee plugin.
+See: the About for eturnerx.tq.mobnamer.twee
+
+From the examples provided at:
+http://forum.codecall.net/topic/49665-java-random-name-generator/#axzz2B24xMDe8
+
+
+CONTRIBUTORS:
+(Add your name as you contribute)
+Emmanuel King Turner (eturnerx / @stormrose / Et) http://eturnerx.com
+
+
+
+::eturnerx.tq.mobnamer Goblin [tq.eturnerx.mobnamer.culture]
+-waa +c
+-boo +c
+-gar
+-bar
+-dar
+-jar
+-var
+-kra
+-gra
+-dra
+-zra
+-gob
+-dob
+-rob
+-fob
+-zob
+-rag
+-nag
+-dag
+bra
+ga
+da
+do
+go
+ze
+sha
+naz
+zub
+zu
+na
+gor
+boo +c
++byr
++gyr
++dyr
++vyr
++zyr
++yr -c
++zog
++rog
++gog
++og -c
++gul
++dul
++bul
++rul
++ul -c
++rgh -v
