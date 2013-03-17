@@ -1,0 +1,95 @@
+::eturnerx.tq.autosynonym.twee About [Twine.private]
+VERSION: 20130317
+LICENSE: Creative Commons. Attribute. Share.
+DESCRIPTION: Automagically replace synonyms to give magical random flavour
+HISTORY: made for the "Regen" project began Nov 2012
+CONTRIBUTORS: Emmanuel King Turner (Et / eturnerx / @stormrose)
+USAGE:
+Adds a $$prefix to the wikifier. Just use $$ in normal passage text
+
+Each line is a synonym set. Items in lines are separated by commas
+
+The first item in each line is the term in the story to match for 
+replacement. The first item may not contain spaces.
+
+The second item is commands. Nothing for now so leave blank.
+
+The third and subsequent items are the replacements. This may have
+spaces if you like.
+
+e.g.
+
+celebrate, ,celebrate, praise, mark, observe
+
+
+TODO: 
+2nd option modes, like choose once, replace always, choice twice replace one or two, never repeat
+Convert to TwineQuest plugin
+Make it possible to limit synonym matching to a passage, or global
+
+
+::eturnerx.tq.autosynonym [tq.system.plugin]
+{
+    version: '0.1.0',
+    
+    tag: 'eturnerx.autosynonym',
+    
+    onInit: function() {
+        this._synonyms = [ ];
+        Wikifier.formatters.push({
+            name: 'eturner.tq.autosynonym',
+            match: String.fromCharCode(92) + '$' + String.fromCharCode(92) + '$' + String.fromCharCode(92) + 'S',
+            handler: function(w) {
+                var s = w.source.substr(w.matchStart);
+                if(s.length > 2 && s.indexOf(' ') > 0) {
+                    s = s.substr(2,s.indexOf(' ')-2).toLowerCase();
+                    w.nextMatch = w.matchStart + s.length + 2;
+                    var replacement = s;
+                    var sl = this._autosynonymplugin._synonyms;
+                    var i = sl.length;
+                    while(i > 0) {
+                        i--;
+                        if(sl[i].match == s) {
+                            var candidates = sl[i].candidates;
+                            replacement = candidates[Math.floor(Math.random()*candidates.length)];
+                            break;
+                        }
+                    }       
+                }
+                insertText(w.output, replacement);
+            },
+            _autosynonymplugin: TwineQuest.findPluginById('eturnerx.tq.autosynonym'),
+        });
+    },
+
+    onPassage: function(passage) {
+        var g = passage.text.split(String.fromCharCode(10));
+        for(var gi in g) {
+            var l = g[gi].split(',');
+            if(l.length == 0) continue;
+            if(l.length < 3) throw('Entry for ' + l[0] + ' is malformed. Use: PATTERNWORD, MODE, REPLACE1, REPLACE2, ....');
+            var synonymindex = null;
+            var synonymmode = null;
+            var synonymcandidates = [];
+            for(var li in l) {
+                var t = l[li].trim();
+                if(t.substr(0,2) == '$$') t = t.substr(2).toLowerCase();
+                if(synonymindex == null) synonymindex = t.toLowerCase();
+                else if(synonymmode == null) synonymmode = t;
+                else synonymcandidates.push(t.toLowerCase());
+            }
+            this._synonyms.push({
+                match: synonymindex,
+                mode: synonymmode,
+                last: '',
+                candidates: synonymcandidates,
+            });
+        }
+    },
+    
+    onStart: null,
+    
+    onEvent: null,
+    
+    _synonyms: null,  
+}
