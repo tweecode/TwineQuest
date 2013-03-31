@@ -97,30 +97,23 @@ Wikifier.formatters.push({
 
 
 // Provide utility functions useful to TwineQuest plugins
+
+//isNumber() from: http://stackoverflow.com/a/1830844
+TwineQuest.isNumber = function(n) { 
+    return !isNaN(parseFloat(n)) && isFinite(n); 
+};
 TwineQuest.registerPlugin = function(a) {
     if(a != null) {
         if(a.priority == null) {
             a.priority = 1000;
         }
         this.plugins.push(a);
-        this.plugins.sort(function(a,b){
-            return a.priority - b.priority;
-        });
+        this.plugins.sort(function(a,b){ return a.priority - b.priority; });
     }
-}
-TwineQuest.initPlugins = function() {
-    for(var ip = 0; ip < this.plugins.length; ip++) {
-        var a = this.plugins[ip];
-        if(a != null) {
-            if(typeof a.onInit == 'function') {
-                a.onInit();
-            }
-            if(typeof a.onEvent == 'function') {
-                a.onEvent('init',null);
-            }
-        }
-    }
-}
+};
+TwineQuest.registerLabel = function(label, xhandler, xdata, xplugin) {
+    this.labels[label] = { handler: xhandler, data: xdata, plugin: xplugin };
+};
 TwineQuest.findPluginById = function(id) {
     var r = null;
     var i = this.plugins.length - 1;
@@ -132,31 +125,28 @@ TwineQuest.findPluginById = function(id) {
     } while(i--);
     return r;
 };
-TwineQuest.tagFindPlugins = function() {
-    var ip = this.plugins.length - 1;
-    do {
-        var a = this.plugins[ip];
-        if(a && a.tag && (typeof a.onPassage == 'function' || typeof a.onEvent == 'function')) {
-            var p = tale.lookup('tags', 'tq.' + a.tag);
-            for(var i = 0; i < p.length; i++) {
-                if(typeof a.onPassage == 'function') {
-                    a.onPassage(p[i]);
-                }
-                if(typeof a.onEvent == 'function') {
-                    a.onEvent('passage', p[i]);
-                }
-            }
-        }
-    } while(ip--);
-}
-TwineQuest.registerLabel = function(label, xhandler, xdata, xplugin) {
-    this.labels[label] = { handler: xhandler, data: xdata, plugin: xplugin };
-};
 TwineQuest.acnToObject = function(text) {
-    //TODO: Takes the attribute:newline format and converts to JS obj
     var r = {}; 
     var kv = [];
+    var t = null;
     var state = 0;   //0 looking for var, 1 adding to value, 2 lastlineblank
+
+    var _numvar = function(t) {
+        var r = t;
+        if(TwineQuest.isNumber(t)) {
+            t = parseFloat(r);
+            if(!isNaN(t)) {
+                r = t;
+            } else {
+                t = parseInt(r);
+                if(!isNaN(t)) {
+                    r = t;
+                }
+            } 
+        }
+        return r;
+    }
+
     var lines = text.split(String.fromCharCode(10));
     for(var i in lines) {
         var line = lines[i];
@@ -167,7 +157,7 @@ TwineQuest.acnToObject = function(text) {
                     kv[0] = kv[0].trim();
                     kv[1] = kv[1].trim();
                     if(kv[1].length > 0) {
-                        r[kv[0]] = kv[1];
+                        r[kv[0]] = _numvar(kv[1]);
                     } else {
                         state = 1;
                     }
@@ -189,7 +179,7 @@ TwineQuest.acnToObject = function(text) {
                 var icolon = line.indexOf(':');
                 var ispace = line.indexOf(' ');
                 if(icolon > 0 && (ispace < 0 || ispace >= icolon - 1)) {
-                    r[kv[0]] = kv[1].trim();
+                    r[kv[0]] = _numvar(kv[1].trim());
                     kv = line.split(':');
                     kv[0] = kv[0].trim();
                     kv[1] = kv[1].trim();
@@ -208,10 +198,41 @@ TwineQuest.acnToObject = function(text) {
                 break;
         }
     }
-    if(state != 0) r[kv[0]] = kv[1].trim();
+    if(state != 0) {
+        r[kv[0]] = _numvar(kv[1].trim());
+    }
     return r;
-}
-
+};
+TwineQuest.initPlugins = function() {
+    for(var ip = 0; ip < this.plugins.length; ip++) {
+        var a = this.plugins[ip];
+        if(a != null) {
+            if(typeof a.onInit == 'function') {
+                a.onInit();
+            }
+            if(typeof a.onEvent == 'function') {
+                a.onEvent('init',null);
+            }
+        }
+    }
+};
+TwineQuest.tagFindPlugins = function() {
+    var ip = this.plugins.length - 1;
+    do {
+        var a = this.plugins[ip];
+        if(a && a.tag && (typeof a.onPassage == 'function' || typeof a.onEvent == 'function')) {
+            var p = tale.lookup('tags', 'tq.' + a.tag);
+            for(var i = 0; i < p.length; i++) {
+                if(typeof a.onPassage == 'function') {
+                    a.onPassage(p[i]);
+                }
+                if(typeof a.onEvent == 'function') {
+                    a.onEvent('passage', p[i]);
+                }
+            }
+        }
+    } while(ip--);
+};
 
 
 // Built in plugins with near universal appeal
@@ -261,19 +282,18 @@ TwineQuest.registerPlugin({
 });
 
 
-
 // Register TwineQuest plugins from the PassageStore
 var p = tale.lookup('tags','tq.system.plugin');
-for(var i=0;i<p.length;i++) {
+for(var tqi=0;tqi<p.length;tqi++) {
     try {
         var TwineQuestPlugin;
-        eval('TwineQuestPlugin = ' + p[i].text);
+        eval('TwineQuestPlugin = ' + p[tqi].text);
         if(TwineQuestPlugin && TwineQuestPlugin.id == null) {
-            TwineQuestPlugin.id = p[i].title;
+            TwineQuestPlugin.id = p[tqi].title;
         }
         TwineQuest.registerPlugin(TwineQuestPlugin);
     } catch(e) {
-        throwError(place, 'Error registering TwineQuest plugin ' + p[i].title + ': ' + e.toString());
+        throwError(place, 'Error registering TwineQuest plugin ' + p[tqi].title + ': ' + e.toString());
     }
 }
 try {
