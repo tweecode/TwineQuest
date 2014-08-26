@@ -1,0 +1,76 @@
+::9999 Macro while.twee About [Twine.private]
+
+VERSION: 20140827
+
+LICENSE: CC BY-SA 4.0 | Creative Commons Attribute Share-Alike.  http://creativecommons.org/licenses/by-sa/4.0/
+
+USAGE:
+<<while $condition eq true>>
+Do stuff.
+<<endwhile>>
+
+PURPOSE:
+Implementation of a while loop. Avoids using the awful hacks of the past. 
+
+CONTRIBUTORS:
+Emmanuel King Turner (eturnerx / Et / @stormrose)
+
+ACKNOWLEDGEMENT:
+Basic idea taken from the <<if>> macro, but works slightly differently.
+
+
+::9999 Macro while.twee [script]
+try { 
+
+version.extensions.whileMacros = {
+    major: 1, minor: 0, revision: 0
+};
+
+macros['while'] = { 
+  handler: function(place, macroName, params, parser) {
+    var srcOffset = parser.source.indexOf(">>", parser.matchStart) + 2,
+      src = parser.source.slice(srcOffset),
+      endPos = -1,
+      condition = parser.fullArgs().trim(),
+      body = "",
+      nestlevel = 0,
+      i = 0;
+        
+    for (; i < src.length; i++) {
+      if (src.substr(i, 8) == "<<while ") {
+        nestlevel++;
+      }
+      if (src.substr(i, 12) == "<<endwhile>>") {
+        nestlevel--;
+        if (nestlevel < 0) {
+          endPos = srcOffset + i + 12;
+          break;
+        }
+      }
+      body += src.charAt(i);
+    }
+    body = body.trim();
+
+    if (endPos != -1) {
+      parser.nextMatch = endPos;
+      try {
+        while (internalEval(condition)) {
+          new Wikifier(place, body);
+        }
+      } catch (e) {
+        throwError(place, "<<while>> bad condition: " + condition, parser.fullMatch());
+      }
+    } else {
+      throwError(place, "I can't find a matching <<endwhile>>", parser.fullMatch());
+    }
+  },
+  init: function() { }
+};
+
+macros["endwhile"] = {
+  handler: function () {}
+};
+
+} catch(e) { 
+  throwError(place,"Macro while Error: "+e.message); 
+}
