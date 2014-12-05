@@ -1,0 +1,72 @@
+::9999 Macro atend.twee About [Twine.private]
+VERSION: 20141206
+LICENSE: Public Domain
+
+USAGE:
+<<atend>>This text appears at the end of the passage<<atendd>>
+
+PURPOSE:
+To output certain text at the end of the current passage.
+
+CONTRIBUTORS:
+Emmanuel King Turner (eturnerx / Et / @stormrose)
+
+ACKNOWLEDGEMENT:
+Originally made for use in "Raik" by Harry Giles http://ifdb.tads.org/viewgame?id=j8dfkrype8wk70k
+Uses the function decorators from http://me.dt.in.th/page/JavaScript-override/
+
+::9999 Macro atend.twee About [script]
+(function() {
+	version.extensions.atendmacro = {
+		major: 1,
+		minor: 0,
+		revision: 0
+	};
+
+	//Function decorators from: http://me.dt.in.th/page/JavaScript-override/
+	function override(object, methodName, callback) {
+		object[methodName] = callback(object[methodName])
+	}
+	function override_before(extraBehavior) {
+		return function(original) {
+			return function() {
+				extraBehavior.apply(this, arguments)
+				return original.apply(this, arguments)
+			}
+		}
+	}
+	function override_after(extraBehavior) {
+		return function(original) {
+			return function() {
+				var returnValue = original.apply(this, arguments)
+				extraBehavior.apply(this, arguments)
+				return returnValue
+			}
+		}
+	}
+
+	//Setup a macro to always print text at end of passage.
+	macros.atend = {};
+	macros.atend.handler = function(place, macroName, params, parser) {
+		var srcOffset = parser.source.indexOf(">>", parser.matchStart) + 2,
+			src = parser.source.slice(srcOffset),
+			i = src.indexOf('<<atendd>>');
+
+		if(i > -1) {
+			if (tale.atend === undefined) {
+				tale.atend = [ place, '' ];
+			}
+			tale.atend[1] += src.substr(0, i);
+			parser.nextMatch = srcOffset + i + 10; 
+		} else {
+			throwError(place, "<<atend>> can't find a matching <<atendd>>", parser.fullMatch());
+		}
+	};
+	macros.atendd = { handler: function() {} };
+	override(Passage.prototype, 'render', override_after(function() {
+		if(tale.atend !== undefined) {
+			new Wikifier(tale.atend[0], tale.atend[1]);
+			tale.atend = undefined;
+		}
+	}));
+}());
