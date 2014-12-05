@@ -15,7 +15,7 @@ ACKNOWLEDGEMENT:
 Originally made for use in "Raik" by Harry Giles http://ifdb.tads.org/viewgame?id=j8dfkrype8wk70k
 Uses the function decorators from http://me.dt.in.th/page/JavaScript-override/
 
-::9999 Macro atend.twee About [script]
+::9999 Macro atend.twee [script]
 (function() {
 	version.extensions.atendmacro = {
 		major: 1,
